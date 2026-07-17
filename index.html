@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>復盤表</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper:#E8EAEE; --raised:#F4F5F7; --field:#FFFFFF;
+    --ink:#171B22; --ink-soft:#4B525E; --ink-faint:#878E99;
+    --rule:#C7CCD3; --rule-soft:#DCE0E5;
+    --signal:#8F5314; --signal-bg:#F6E9D5; --signal-line:#C98F45;
+    --measure:34rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:#12151A; --raised:#1A1E25; --field:#0C0E12;
+      --ink:#E3E7ED; --ink-soft:#9AA2AE; --ink-faint:#666E7A;
+      --rule:#2B313A; --rule-soft:#21262E;
+      --signal:#E0A15A; --signal-bg:#2A2118; --signal-line:#7C5626;
+    }
+  }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    font-size: 16px; line-height: 1.7; -webkit-text-size-adjust: 100%;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 1.25rem 8rem; }
+
+  .bar-host { position: sticky; top: 0; z-index: 10; background: var(--paper); border-bottom: 1px solid var(--rule-soft); }
+  .bar-inner { max-width: var(--measure); margin: 0 auto; padding: 0.7rem 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+  .track { flex: 1; height: 3px; background: var(--rule-soft); overflow: hidden; }
+  .fill { height: 100%; width: 0%; background: var(--signal); transition: width 0.25s ease; }
+  .count { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--ink-faint); white-space: nowrap; }
+
+  header { padding: 3rem 0 2rem; border-bottom: 2px solid var(--ink); margin-bottom: 2.5rem; }
+  .eyebrow { font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--signal); margin-bottom: 0.9rem; }
+  h1 { font-size: 2.4rem; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; margin-bottom: 1rem; text-wrap: balance; }
+  .standfirst { color: var(--ink-soft); font-size: 1rem; }
+
+  .brief { background: var(--signal-bg); border-left: 2px solid var(--signal-line); padding: 1.1rem 1.2rem; margin-bottom: 3rem;
+           font-size: 0.92rem; line-height: 1.75; color: var(--ink-soft); display: flex; flex-direction: column; gap: 0.7rem; }
+  .brief strong { color: var(--ink); font-weight: 600; }
+
+  section { margin-bottom: 3.5rem; }
+  .sec-head { display: flex; align-items: baseline; gap: 0.8rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--rule); margin-bottom: 1.75rem; }
+  .sec-num { font-size: 0.78rem; color: var(--signal); letter-spacing: 0.06em; }
+  h2 { font-size: 1.12rem; font-weight: 600; letter-spacing: -0.01em; flex: 1; }
+  .sec-note { font-size: 0.85rem; color: var(--ink-faint); margin: -1.2rem 0 1.75rem; line-height: 1.65; }
+
+  .q { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2.25rem; }
+  .q-label { font-size: 0.97rem; font-weight: 500; line-height: 1.55; text-wrap: pretty; }
+  .q-hint { font-size: 0.82rem; color: var(--ink-faint); line-height: 1.6; margin-top: -0.4rem; }
+  .tag-optional { font-size: 0.7rem; letter-spacing: 0.06em; color: var(--ink-faint); font-weight: 400; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .chip { position: relative; }
+  .chip input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .chip span { display: block; padding: 0.5rem 0.85rem; border: 1px solid var(--rule); background: var(--raised);
+               color: var(--ink-soft); font-size: 0.9rem; line-height: 1.4; transition: background .12s, border-color .12s, color .12s; }
+  .chip input:checked + span { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .chip input:focus-visible + span { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+  .slider-poles { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.78rem; color: var(--ink-faint); }
+  input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 30px; background: transparent; cursor: pointer; }
+  input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: var(--rule); }
+  input[type="range"]::-moz-range-track { height: 2px; background: var(--rule); }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -10px; border-radius: 50%;
+    background: var(--signal); border: 3px solid var(--paper); box-shadow: 0 0 0 1px var(--signal); }
+  input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%;
+    background: var(--signal); border: 3px solid var(--paper); box-shadow: 0 0 0 1px var(--signal); }
+  input[type="range"]:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; }
+  .readout { font-size: 0.85rem; background: var(--raised); border: 1px solid var(--rule-soft); padding: 0.45rem 0.7rem; align-self: flex-start; }
+  .readout b { color: var(--signal); font-weight: 600; }
+
+  input[type="text"], textarea {
+    width: 100%; background: var(--field); border: 1px solid var(--rule); color: var(--ink);
+    padding: 0.7rem 0.8rem; font: inherit; font-size: 0.95rem; line-height: 1.6; resize: vertical;
+  }
+  input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--signal); box-shadow: 0 0 0 1px var(--signal); }
+  textarea { min-height: 5.5rem; }
+  ::placeholder { color: var(--ink-faint); opacity: 1; }
+
+  .verbatim { background: var(--raised); border: 1px solid var(--rule); border-top: 2px solid var(--signal-line);
+              padding: 1.2rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .verbatim .q-label { font-weight: 600; }
+  .verbatim-flag { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--signal); }
+
+  .actions { display: flex; flex-direction: column; gap: 0.75rem; padding-top: 2.5rem; border-top: 2px solid var(--ink); }
+  button { font: inherit; font-size: 0.95rem; padding: 0.85rem 1rem; border: 1px solid var(--ink);
+           background: var(--ink); color: var(--paper); cursor: pointer; transition: opacity .12s; }
+  button:hover { opacity: 0.85; }
+  button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  button.ghost { background: transparent; color: var(--ink-soft); border-color: var(--rule); }
+  #out { width: 100%; min-height: 16rem; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         font-size: 0.8rem; line-height: 1.65; white-space: pre; overflow-x: auto; }
+  .hidden { display: none; }
+  .saved { font-size: 0.78rem; color: var(--ink-faint); text-align: center; padding-top: 0.5rem; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="bar-host">
+  <div class="bar-inner">
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="count mono" id="count">0 / 0</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">事實清單</p>
+  <h1>復盤表</h1>
+  <p class="standfirst">這不是心理測驗，不會算出對方喜不喜歡你。這是把兩年份的事實攤在同一張紙上。</p>
+</header>
+
+<div class="brief">
+  <p><strong>為什麼是你填，不是你講。</strong>講的時候人會挑重點，會把好的那幾天講成常態。填的時候會發現有些格子填不出來——那些填不出來的格子，才是答案。</p>
+  <p><strong>只問事實，不問你的感覺。</strong>「你覺得她喜歡你嗎」這種問題沒有用，你會回答你想相信的。所以這裡問的是幾號、幾次、誰先、原文。</p>
+  <p><strong>沒有人會看到你的答案，除非你自己貼出去。</strong>這個網頁不會把任何東西傳出去。填完按最下面的按鈕，會產生一份純文字，複製到哪裡是你的事。</p>
+  <p><strong>可以中途離開。</strong>填的東西會存在這台手機裡。</p>
+</div>
+
+<form id="f">
+
+<section>
+  <div class="sec-head"><span class="sec-num mono">01</span><h2>時間軸</h2></div>
+  <p class="sec-note">先把尺拉出來。多數人會低估自己花掉的時間。</p>
+
+  <div class="q">
+    <span class="q-label">你們認識多久了？</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_know" value="不到半年"><span>不到半年</span></label>
+      <label class="chip"><input type="radio" name="q_know" value="半年到一年"><span>半年到一年</span></label>
+      <label class="chip"><input type="radio" name="q_know" value="一到兩年"><span>一到兩年</span></label>
+      <label class="chip"><input type="radio" name="q_know" value="兩年以上"><span>兩年以上</span></label>
+    </div>
+  </div>
+
+  <div class="q">
+    <label class="q-label" for="q_since">你從什麼時候開始喜歡她的？</label>
+    <input type="text" id="q_since" name="q_since" placeholder="例：高一下、去年暑假、忘了">
+  </div>
+
+  <div class="q">
+    <span class="q-label">到今天為止，「熱一陣子然後突然斷掉」這個循環跑過幾輪？</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_rounds" value="1輪"><span>1 輪</span></label>
+      <label class="chip"><input type="radio" name="q_rounds" value="2輪"><span>2 輪</span></label>
+      <label class="chip"><input type="radio" name="q_rounds" value="3輪"><span>3 輪</span></label>
+      <label class="chip"><input type="radio" name="q_rounds" value="4輪以上"><span>4 輪以上</span></label>
+      <label class="chip"><input type="radio" name="q_rounds" value="沒有這種循環"><span>沒有這種循環</span></label>
+    </div>
+  </div>
+
+  <div class="q">
+    <label class="q-label" for="q_silent">現在這一次，已經幾天沒講話了？</label>
+    <input type="text" id="q_silent" name="q_silent" placeholder="填數字就好">
+  </div>
+
+  <div class="q">
+    <label class="q-label" for="q_longest">過去最長的一次斷了多久？後來是怎麼恢復的？誰先傳的？</label>
+    <textarea id="q_longest" name="q_longest" placeholder="例：斷兩個禮拜，開學看到就自然又開始講了 / 我先傳的"></textarea>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num mono">02</span><h2>誰在動</h2></div>
+  <p class="sec-note">滑到你憑印象覺得的位置就好，不用回去翻。</p>
+
+  <div class="q" data-slider>
+    <span class="q-label">每次對話，是誰先開口的？</span>
+    <div class="slider-poles"><span>都是我開的</span><span>都是她開的</span></div>
+    <input type="range" name="s_open" min="0" max="10" value="5">
+    <div class="readout">目前：<b data-out></b></div>
+  </div>
+
+  <div class="q" data-slider>
+    <span class="q-label">誰比較常問對方問題？</span>
+    <p class="q-hint">問句代表想讓對話繼續下去。這是投資，不是禮貌。</p>
+    <div class="slider-poles"><span>都是我在問</span><span>都是她在問</span></div>
+    <input type="range" name="s_ask" min="0" max="10" value="5">
+    <div class="readout">目前：<b data-out></b></div>
+  </div>
+
+  <div class="q" data-slider>
+    <span class="q-label">誰的訊息比較長？</span>
+    <div class="slider-poles"><span>我長很多</span><span>她長很多</span></div>
+    <input type="range" name="s_len" min="0" max="10" value="5">
+    <div class="readout">目前：<b data-out></b></div>
+  </div>
+
+  <div class="q" data-slider>
+    <span class="q-label">話題沒了的時候，誰會生一個新的出來？</span>
+    <div class="slider-poles"><span>都是我</span><span>都是她</span></div>
+    <input type="range" name="s_topic" min="0" max="10" value="5">
+    <div class="readout">目前：<b data-out></b></div>
+  </div>
+
+  <div class="q" data-slider>
+    <span class="q-label">誰比較常已讀不回，或隔很久才回？</span>
+    <div class="slider-poles"><span>都是我</span><span>都是她</span></div>
+    <input type="range" name="s_ghost" min="0" max="10" value="5">
+    <div class="readout">目前：<b data-out></b></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num mono">03</span><h2>硬證據</h2></div>
+  <p class="sec-note">這一節不要用回憶，去翻聊天室。翻不到就寫「找不到」——找不到本身就是一個答案，不是失敗。</p>
+
+  <div class="verbatim q">
+    <span class="verbatim-flag">要原文</span>
+    <span class="q-label">她最後一次「你沒有先傳、也沒有任何理由」就主動傳訊息給你，是什麼時候？把那則原文貼上來。</span>
+    <p class="q-hint">「有理由」指的是問作業、班上的事、回你的限動。這裡要的是沒有任何理由，她就是想跟你講話。</p>
+    <textarea name="v_init" placeholder="日期 + 原文。翻不到就寫「找不到」。"></textarea>
+  </div>
+
+  <div class="verbatim q">
+    <span class="verbatim-flag">要原文</span>
+    <span class="q-label">她主動約過你嗎？不是答應你的約，是她開口的。</span>
+    <textarea name="v_invite" placeholder="日期 + 原文。沒有就寫「沒有」。"></textarea>
+  </div>
+
+  <div class="q">
+    <span class="q-label">她為你做過什麼「要花她的時間、或會讓她有點尷尬」的事？</span>
+    <p class="q-hint">講出來不用成本，做出來要。這一題只要行為，不要話。</p>
+    <div class="chips">
+      <label class="chip"><input type="checkbox" name="c_cost" value="為了靠近我挑座位"><span>為了靠近我挑座位</span></label>
+      <label class="chip"><input type="checkbox" name="c_cost" value="特地來找我"><span>特地來找我</span></label>
+      <label class="chip"><input type="checkbox" name="c_cost" value="為我改行程"><span>為我改行程</span></label>
+      <label class="chip"><input type="checkbox" name="c_cost" value="在別人面前跟我一起"><span>在別人面前跟我一起</span></label>
+      <label class="chip"><input type="checkbox" name="c_cost" value="送過東西"><span>送過東西</span></label>
+      <label class="chip"><input type="checkbox" name="c_cost" value="幫我擋過什麼"><span>幫我擋過什麼</span></label>
+      <label class="chip"><input type="checkbox" name="c_cost" value="熬夜等我"><span>熬夜等我</span></label>
+      <label class="chip"><input type="checkbox" name="c_cost" value="想不到"><span>想不到</span></label>
+    </div>
+    <textarea name="c_cost_detail" placeholder="有勾的話，把細節寫清楚：什麼時候、發生什麼事、她說了什麼。"></textarea>
+  </div>
+
+  <div class="q">
+    <span class="q-label">座位那件事，講清楚。</span>
+    <p class="q-hint">這可能是整件事裡唯一一個她真的付出代價的行為，所以細節很重要。</p>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_seat" value="她自己挑的，我沒有暗示"><span>她自己挑的，我沒暗示</span></label>
+      <label class="chip"><input type="radio" name="q_seat" value="我有先提過"><span>我有先提過</span></label>
+      <label class="chip"><input type="radio" name="q_seat" value="是老師排的"><span>是老師排的</span></label>
+      <label class="chip"><input type="radio" name="q_seat" value="不確定"><span>不確定</span></label>
+    </div>
+    <textarea name="q_seat_detail" placeholder="她當時怎麼講的？原文。還有：她坐了多久？後來有再挑一次嗎？"></textarea>
+  </div>
+
+  <div class="q">
+    <span class="q-label">她跟你講過別人的心事嗎？那種她不會隨便講給別人聽的。</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_secret" value="有，滿多的"><span>有，滿多的</span></label>
+      <label class="chip"><input type="radio" name="q_secret" value="有一兩次"><span>有一兩次</span></label>
+      <label class="chip"><input type="radio" name="q_secret" value="沒有"><span>沒有</span></label>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num mono">04</span><h2>斷掉的那一刻</h2></div>
+  <p class="sec-note">每次斷掉都有一個最後一則。那則通常是同一種東西。</p>
+
+  <div class="verbatim q">
+    <span class="verbatim-flag">要原文</span>
+    <span class="q-label">最近這次斷掉之前，你傳的最後兩三則是什麼？</span>
+    <textarea name="v_last" placeholder="原文照貼，包括表情符號。不要美化。"></textarea>
+  </div>
+
+  <div class="verbatim q">
+    <span class="verbatim-flag">要原文</span>
+    <span class="q-label">上一輪斷掉之前，你傳的最後幾則是什麼？</span>
+    <p class="q-hint">兩輪一起看，才知道是不是同一個東西弄斷的。</p>
+    <textarea name="v_last_prev" placeholder="翻得到就貼，翻不到寫「翻不到」。"></textarea>
+  </div>
+
+  <div class="q">
+    <span class="q-label">她安靜之後，你做了什麼？</span>
+    <div class="chips">
+      <label class="chip"><input type="checkbox" name="c_after" value="又傳了幾則"><span>又傳了幾則</span></label>
+      <label class="chip"><input type="checkbox" name="c_after" value="問她怎麼不回"><span>問她怎麼不回</span></label>
+      <label class="chip"><input type="checkbox" name="c_after" value="一直看她限動"><span>一直看她限動</span></label>
+      <label class="chip"><input type="checkbox" name="c_after" value="發限動想讓她看到"><span>發限動想讓她看到</span></label>
+      <label class="chip"><input type="checkbox" name="c_after" value="找共同朋友問"><span>找共同朋友問</span></label>
+      <label class="chip"><input type="checkbox" name="c_after" value="故意冷她"><span>故意冷她</span></label>
+      <label class="chip"><input type="checkbox" name="c_after" value="什麼都沒做"><span>什麼都沒做</span></label>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num mono">05</span><h2>你自己傳過什麼</h2></div>
+  <p class="sec-note">這節會有點難填。她的心思沒人猜得準，但你的行為是可以查的，而且只有這部分是你能改的。</p>
+
+  <div class="q">
+    <span class="q-label">下面這些，你傳過哪些？誠實一點，這裡沒有別人。</span>
+    <div class="chips">
+      <label class="chip"><input type="checkbox" name="c_msgs" value="你怎麼都不回"><span>「你怎麼都不回」</span></label>
+      <label class="chip"><input type="checkbox" name="c_msgs" value="你是不是不想理我"><span>「你是不是不想理我」</span></label>
+      <label class="chip"><input type="checkbox" name="c_msgs" value="都是我在吵你"><span>「都是我在吵你」</span></label>
+      <label class="chip"><input type="checkbox" name="c_msgs" value="我自己一個人不好"><span>「我自己一個人不好」</span></label>
+      <label class="chip"><input type="checkbox" name="c_msgs" value="不陪我嗎+可憐表情"><span>「不陪我嗎」＋可憐表情</span></label>
+      <label class="chip"><input type="checkbox" name="c_msgs" value="跟你聊天我很開心"><span>「跟你聊天我很開心」</span></label>
+      <label class="chip"><input type="checkbox" name="c_msgs" value="都沒有"><span>都沒有</span></label>
+    </div>
+  </div>
+
+  <div class="q" data-slider>
+    <span class="q-label">聊得正熱的時候，你會不會忍不住加碼——多講一句、講重一點、把話講白？</span>
+    <div class="slider-poles"><span>完全不會</span><span>每次都這樣</span></div>
+    <input type="range" name="s_push" min="0" max="10" value="5">
+    <div class="readout">目前：<b data-out></b></div>
+  </div>
+
+  <div class="q" data-slider>
+    <span class="q-label">她回訊息的速度，會影響你當天的心情嗎？</span>
+    <div class="slider-poles"><span>完全不會</span><span>整天都在想</span></div>
+    <input type="range" name="s_mood" min="0" max="10" value="5">
+    <div class="readout">目前：<b data-out></b></div>
+  </div>
+
+  <div class="q">
+    <label class="q-label" for="q_regret">回頭看，哪一則是你最希望自己沒傳的？</label>
+    <textarea id="q_regret" name="q_regret" placeholder="原文。沒有的話寫「沒有」。"></textarea>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num mono">06</span><h2>她知道嗎</h2></div>
+
+  <div class="q">
+    <span class="q-label">她知不知道你喜歡她？</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_knows" value="一定知道，我講過"><span>一定知道，我講過</span></label>
+      <label class="chip"><input type="radio" name="q_knows" value="應該知道，很明顯"><span>應該知道，很明顯</span></label>
+      <label class="chip"><input type="radio" name="q_knows" value="可能有感覺"><span>可能有感覺</span></label>
+      <label class="chip"><input type="radio" name="q_knows" value="我覺得她不知道"><span>我覺得她不知道</span></label>
+    </div>
+    <textarea name="q_knows_why" placeholder="你怎麼知道的？講證據，不要講感覺。"></textarea>
+  </div>
+
+  <div class="q">
+    <span class="q-label">你正式講開過嗎？</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_confess" value="有"><span>有</span></label>
+      <label class="chip"><input type="radio" name="q_confess" value="暗示過，沒講明"><span>暗示過，沒講明</span></label>
+      <label class="chip"><input type="radio" name="q_confess" value="完全沒有"><span>完全沒有</span></label>
+    </div>
+    <textarea name="q_confess_detail" placeholder="有的話：什麼時候、你怎麼說的、她原話怎麼回的。"></textarea>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num mono">07</span><h2>旁邊還有誰</h2></div>
+  <p class="sec-note">你不用寫名字，寫代號就好。</p>
+
+  <div class="q">
+    <span class="q-label">據你所知，她有喜歡的人嗎？</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_other" value="有，我知道是誰"><span>有，我知道是誰</span></label>
+      <label class="chip"><input type="radio" name="q_other" value="好像有，但不確定"><span>好像有，不確定</span></label>
+      <label class="chip"><input type="radio" name="q_other" value="應該沒有"><span>應該沒有</span></label>
+      <label class="chip"><input type="radio" name="q_other" value="完全不知道"><span>完全不知道</span></label>
+    </div>
+  </div>
+
+  <div class="q">
+    <span class="q-label">你知道她以前有沒有發生過類似的事——有人喜歡她、跟她很好、後來沒有在一起？</span>
+    <p class="q-hint">這題比你想像中重要很多。如果同樣的形狀發生過，那形狀本身就是資訊。</p>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_prior" value="有，發生過"><span>有，發生過</span></label>
+      <label class="chip"><input type="radio" name="q_prior" value="聽說有"><span>聽說有</span></label>
+      <label class="chip"><input type="radio" name="q_prior" value="沒有"><span>沒有</span></label>
+      <label class="chip"><input type="radio" name="q_prior" value="不知道"><span>不知道</span></label>
+    </div>
+    <textarea name="q_prior_detail" placeholder="如果有：那個人是什麼樣的？他很纏、一直討訊息嗎？還是他其實很穩、很有分寸，最後還是沒有？"></textarea>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num mono">08</span><h2>你要什麼</h2></div>
+  <p class="sec-note">前面七節是給別人分析用的。這一節是給你自己的，而且它比前面全部加起來重要。</p>
+
+  <div class="q">
+    <span class="q-label">你真正想要的是哪一個？只能選一個。</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_want" value="跟她在一起"><span>跟她在一起</span></label>
+      <label class="chip"><input type="radio" name="q_want" value="一個明確的答案，不管是哪個"><span>一個明確的答案</span></label>
+      <label class="chip"><input type="radio" name="q_want" value="不要再想這件事了"><span>不要再想這件事了</span></label>
+      <label class="chip"><input type="radio" name="q_want" value="維持現狀就好"><span>維持現狀就好</span></label>
+    </div>
+  </div>
+
+  <div class="q">
+    <span class="q-label">如果現在有人跟你保證：她會一直是朋友，永遠不會更進一步。你會？</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_if" value="繼續當朋友，我還是想要她在"><span>繼續當朋友</span></label>
+      <label class="chip"><input type="radio" name="q_if" value="慢慢淡掉"><span>慢慢淡掉</span></label>
+      <label class="chip"><input type="radio" name="q_if" value="乾脆一次斷乾淨"><span>一次斷乾淨</span></label>
+      <label class="chip"><input type="radio" name="q_if" value="不知道"><span>不知道</span></label>
+    </div>
+  </div>
+
+  <div class="q" data-slider>
+    <span class="q-label">這件事佔掉你多少注意力？</span>
+    <div class="slider-poles"><span>偶爾想到</span><span>每天都在想</span></div>
+    <input type="range" name="s_occupy" min="0" max="10" value="5">
+    <div class="readout">目前：<b data-out></b></div>
+  </div>
+
+  <div class="q">
+    <span class="q-label">你願意再花多久在這件事上？</span>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="q_budget" value="這學期"><span>這學期</span></label>
+      <label class="chip"><input type="radio" name="q_budget" value="到畢業"><span>到畢業</span></label>
+      <label class="chip"><input type="radio" name="q_budget" value="多久都可以"><span>多久都可以</span></label>
+      <label class="chip"><input type="radio" name="q_budget" value="我其實想停了"><span>我其實想停了</span></label>
+    </div>
+  </div>
+
+  <div class="q">
+    <label class="q-label" for="q_free">最後，有什麼是上面沒問到、但你覺得該講的？<span class="tag-optional">選填</span></label>
+    <textarea id="q_free" name="q_free" placeholder="想到什麼寫什麼。"></textarea>
+  </div>
+</section>
+
+</form>
+
+<div class="actions">
+  <button type="button" id="go">產生報告</button>
+  <textarea id="out" class="hidden" readonly></textarea>
+  <button type="button" id="copy" class="hidden">複製全部</button>
+  <button type="button" id="clear" class="ghost">清空重填</button>
+  <p class="saved">填的內容會自動存在這台裝置</p>
+</div>
+
+</div>
+
+<script>
+(function () {
+  var KEY = "recap-form-v1";
+  var form = document.getElementById("f");
+
+  function poleWords(q) {
+    var poles = q.querySelectorAll(".slider-poles span");
+    return [poles[0].textContent, poles[1].textContent];
+  }
+
+  function sliderText(q, v) {
+    var w = poleWords(q);
+    if (v === 5) return "五五波";
+    if (v < 5) return w[0] + "（" + (5 - v) + " 格）";
+    return w[1] + "（" + (v - 5) + " 格）";
+  }
+
+  function paintSliders() {
+    document.querySelectorAll("[data-slider]").forEach(function (q) {
+      var input = q.querySelector('input[type="range"]');
+      q.querySelector("[data-out]").textContent = sliderText(q, Number(input.value));
+    });
+  }
+
+  function countable() {
+    var groups = {};
+    form.querySelectorAll("input, textarea").forEach(function (el) {
+      if (!el.name) return;
+      groups[el.name] = groups[el.name] || [];
+      groups[el.name].push(el);
+    });
+    return groups;
+  }
+
+  function answered(els) {
+    var t = els[0].type;
+    if (t === "radio" || t === "checkbox") return els.some(function (e) { return e.checked; });
+    if (t === "range") return els[0].dataset.touched === "1";
+    return els[0].value.trim().length > 0;
+  }
+
+  function progress() {
+    var groups = countable();
+    var names = Object.keys(groups);
+    var done = names.filter(function (n) { return answered(groups[n]); }).length;
+    document.getElementById("fill").style.width = (names.length ? (done / names.length) * 100 : 0) + "%";
+    document.getElementById("count").textContent = done + " / " + names.length;
+  }
+
+  function save() {
+    var data = { radio: {}, check: {}, text: {}, range: {}, touched: [] };
+    form.querySelectorAll("input, textarea").forEach(function (el) {
+      if (!el.name) return;
+      if (el.type === "radio") { if (el.checked) data.radio[el.name] = el.value; }
+      else if (el.type === "checkbox") {
+        if (el.checked) { data.check[el.name] = data.check[el.name] || []; data.check[el.name].push(el.value); }
+      } else if (el.type === "range") {
+        data.range[el.name] = el.value;
+        if (el.dataset.touched === "1") data.touched.push(el.name);
+      } else if (el.value.trim()) { data.text[el.name] = el.value; }
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+  }
+
+  function load() {
+    var raw;
+    try { raw = localStorage.getItem(KEY); } catch (e) { return; }
+    if (!raw) return;
+    var data;
+    try { data = JSON.parse(raw); } catch (e) { return; }
+
+    Object.keys(data.radio || {}).forEach(function (n) {
+      var el = form.querySelector('input[name="' + n + '"][value="' + CSS.escape(data.radio[n]) + '"]');
+      if (el) el.checked = true;
+    });
+    Object.keys(data.check || {}).forEach(function (n) {
+      data.check[n].forEach(function (v) {
+        var el = form.querySelector('input[name="' + n + '"][value="' + CSS.escape(v) + '"]');
+        if (el) el.checked = true;
+      });
+    });
+    Object.keys(data.text || {}).forEach(function (n) {
+      var el = form.querySelector('[name="' + n + '"]');
+      if (el) el.value = data.text[n];
+    });
+    Object.keys(data.range || {}).forEach(function (n) {
+      var el = form.querySelector('input[name="' + n + '"]');
+      if (el) el.value = data.range[n];
+    });
+    (data.touched || []).forEach(function (n) {
+      var el = form.querySelector('input[name="' + n + '"]');
+      if (el) el.dataset.touched = "1";
+    });
+  }
+
+  function build() {
+    var lines = ["===== 復盤表 · 填答結果 =====", ""];
+
+    document.querySelectorAll("section").forEach(function (sec) {
+      lines.push("");
+      lines.push("--- " + sec.querySelector(".sec-num").textContent + " " + sec.querySelector("h2").textContent + " ---");
+
+      sec.querySelectorAll(".q").forEach(function (q) {
+        var label = q.querySelector(".q-label");
+        if (!label) return;
+        var text = label.textContent.replace(/選填$/, "").trim();
+        var val = "";
+
+        var range = q.querySelector('input[type="range"]');
+        var radios = q.querySelectorAll('input[type="radio"]');
+        var checks = q.querySelectorAll('input[type="checkbox"]');
+        var frees = q.querySelectorAll('textarea, input[type="text"]');
+
+        if (range) {
+          val = range.dataset.touched === "1"
+            ? sliderText(q, Number(range.value)) + "  [" + range.value + "/10]"
+            : "（沒動）";
+        } else if (radios.length) {
+          var r = Array.prototype.find.call(radios, function (e) { return e.checked; });
+          val = r ? r.value : "（沒選）";
+        } else if (checks.length) {
+          var picked = Array.prototype.filter.call(checks, function (e) { return e.checked; })
+            .map(function (e) { return e.value; });
+          val = picked.length ? picked.join("、") : "（沒選）";
+        }
+
+        lines.push("");
+        lines.push("Q: " + text);
+        if (val) lines.push("A: " + val);
+
+        frees.forEach(function (t) {
+          var v = t.value.trim();
+          if (v) lines.push("   ↳ " + v.split("\n").join("\n     "));
+          else if (!val) lines.push("A: （空白）");
+        });
+      });
+    });
+
+    lines.push("");
+    lines.push("===== 結束 =====");
+    return lines.join("\n");
+  }
+
+  form.addEventListener("input", function (e) {
+    if (e.target.type === "range") { e.target.dataset.touched = "1"; paintSliders(); }
+    save(); progress();
+  });
+  form.addEventListener("change", function () { save(); progress(); });
+
+  document.getElementById("go").addEventListener("click", function () {
+    var out = document.getElementById("out");
+    out.value = build();
+    out.classList.remove("hidden");
+    document.getElementById("copy").classList.remove("hidden");
+    out.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.getElementById("copy").addEventListener("click", function () {
+    var out = document.getElementById("out");
+    out.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(out.value).then(function () {
+        document.getElementById("copy").textContent = "已複製";
+      }, function () {});
+    } else {
+      document.getElementById("copy").textContent = "已複製";
+    }
+  });
+
+  document.getElementById("clear").addEventListener("click", function () {
+    if (!window.confirm("全部清掉重填？")) return;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    location.reload();
+  });
+
+  load(); paintSliders(); progress();
+})();
+</script>
+</body>
+</html>
