@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第二次模考衝刺進度表</title>
+<style>
+  :root{ --bg:#f4f6fb; --card:#fff; --ink:#242a38; --sub:#6f7890; --accent:#e35b8b; --line:#e7ebf3; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;line-height:1.55;}
+  header{padding:20px 16px 14px;background:linear-gradient(160deg,#ffe1ec,#fff2e4);}
+  h1{margin:0;font-size:19px;color:#3a2230;}
+  .sub{color:#8a6b78;font-size:12px;margin-top:4px;}
+  .bar{height:9px;background:#f2d3de;border-radius:6px;margin-top:12px;overflow:hidden;}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#ff7a9c,#ffab6b);width:0;transition:width .3s;}
+  .prog{font-size:12px;color:#8a5a6a;margin-top:6px;display:flex;justify-content:space-between;}
+  .note{margin:12px 14px 0;background:#fff6e6;border:1px solid #f0d9a8;border-radius:11px;padding:10px 12px;font-size:12px;color:#8a5a00;line-height:1.6;}
+  .weekhead{font-size:14px;font-weight:700;color:#c2456f;margin:18px 16px 6px;}
+  .day{margin:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;box-shadow:0 1px 3px rgba(30,40,80,.04);}
+  .day.cram{background:#f5f7fc;}
+  .day.exam{background:#ffeef2;border-color:#f4bcd0;}
+  .dhead{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;}
+  .ddate{font-size:16px;font-weight:700;}
+  .ddow{font-size:12px;color:var(--sub);}
+  .dtag{margin-left:auto;font-size:11px;font-weight:700;padding:2px 9px;border-radius:10px;}
+  .tag-cram{background:#e6ecf6;color:#5a6a8a;}
+  .tag-exam{background:#ffd7e2;color:#c0396a;}
+  .task{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid #f0f2f7;}
+  .task:first-of-type{border-top:none;}
+  .chk{width:22px;height:22px;border-radius:7px;border:2px solid #cfd5e2;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:transparent;font-size:13px;cursor:pointer;margin-top:1px;}
+  .task.done .chk{background:#4caf50;border-color:#4caf50;color:#fff;}
+  .task.done .ttxt{text-decoration:line-through;opacity:.5;}
+  .ttxt{flex:1;font-size:14px;}
+  .chip{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:9px;margin-right:6px;}
+  .c-物理{background:#e3eefc;color:#2c6fc0;} .c-化學{background:#fde3ee;color:#c2456f;}
+  .c-生物{background:#e2f6e6;color:#2e9e4c;} .c-地科{background:#fff1cf;color:#a9780a;}
+  .c-國文{background:#efe6fb;color:#7a4fc0;} .c-英文{background:#e0f4f7;color:#1f8fa0;}
+  .c-衝刺{background:#ffe0e0;color:#d0392a;} .c-模考{background:#ffd7e2;color:#c0396a;}
+  .foot{text-align:center;color:#9aa3b5;font-size:11px;padding:22px 16px 30px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔥 第二次模考 衝刺進度表</h1>
+  <div class="sub">8/10（一）→ 9/1（二） ｜ 模考 9/2、9/3 ｜ 平日晚上主念、六日補習</div>
+  <div class="bar"><i id="barfill"></i></div>
+  <div class="prog"><span id="progtxt">0 / 0 完成</span><span id="cd"></span></div>
+</header>
+
+<div class="note">📌 <b>數學</b>：每天自己抽空寫題本（沒排進格子，照你節奏）。<br>📖 <b>國文大滿貫</b>頁數是估的，照你實際速度調。<br>✅ 打勾會自動存在這支手機裡，關掉再開還在。</div>
+
+<div id="content"></div>
+<div class="foot">一格一格慢慢清就好，加油 🌷</div>
+
+<script>
+const PLAN = [
+ {week:"第 1 週（8/10–8/16）", days:[
+   {d:"8/10",w:"一",type:"study",tasks:[["物理","強效 Ch4 主題1"],["英文","單字＋雜誌"]]},
+   {d:"8/11",w:"二",type:"study",tasks:[["物理","強效 Ch4 主題2"],["化學","好考點7（前半）"],["英文","單字＋雜誌"]]},
+   {d:"8/12",w:"三",type:"study",tasks:[["生物","淬鍊 1-6 呼吸"],["國文","大滿貫 p250–262"],["英文","單字＋雜誌"]]},
+   {d:"8/13",w:"四",type:"study",tasks:[["物理","強效 Ch4 主題3"],["化學","好考點7（後半）"],["英文","單字＋雜誌"]]},
+   {d:"8/14",w:"五",type:"study",tasks:[["地科","淬鍊 3-3 大氣運動"],["國文","大滿貫 p263–274"],["英文","單字＋雜誌"]]},
+   {d:"8/15",w:"六",type:"cram",tasks:[["英文","單字＋雜誌"]]},
+   {d:"8/16",w:"日",type:"cram",tasks:[["英文","單字＋雜誌"],["物理","本週自然錯題快速看一遍"]]},
+ ]},
+ {week:"第 2 週（8/17–8/23）", days:[
+   {d:"8/17",w:"一",type:"study",tasks:[["物理","強效 Ch4 主題4–5"],["英文","單字＋雜誌"]]},
+   {d:"8/18",w:"二",type:"study",tasks:[["化學","好考點8"],["國文","大滿貫 p275–286"],["英文","單字＋雜誌"]]},
+   {d:"8/19",w:"三",type:"study",tasks:[["物理","強效 Ch4 主題6–7"],["英文","單字＋雜誌"]]},
+   {d:"8/20",w:"四",type:"study",tasks:[["生物","淬鍊 1-7 有絲分裂"],["化學","好考點9"],["英文","單字＋雜誌"]]},
+   {d:"8/21",w:"五",type:"study",tasks:[["地科","淬鍊 3-4 熱帶氣旋/颱風/鋒面"],["國文","大滿貫 p287–298"],["英文","單字＋雜誌"]]},
+   {d:"8/22",w:"六",type:"cram",tasks:[["英文","單字＋雜誌"]]},
+   {d:"8/23",w:"日",type:"cram",tasks:[["英文","單字＋雜誌"],["生物","本週自然錯題複習"]]},
+ ]},
+ {week:"第 3 週（8/24–8/30）", days:[
+   {d:"8/24",w:"一",type:"study",tasks:[["物理","強效 Ch4 主題8"],["英文","單字＋雜誌"]]},
+   {d:"8/25",w:"二",type:"study",tasks:[["物理","強效 Ch4 主題9–10"],["化學","引航 CH1（前半）"],["英文","單字＋雜誌"]]},
+   {d:"8/26",w:"三",type:"study",tasks:[["生物","淬鍊 1-8 減數分裂"],["國文","大滿貫 p299–310"],["英文","單字＋雜誌"]]},
+   {d:"8/27",w:"四",type:"study",tasks:[["化學","引航 CH1（後半）"],["英文","單字＋雜誌"]]},
+   {d:"8/28",w:"五",type:"study",tasks:[["地科","淬鍊 3-5～3-6 天氣預報"],["國文","大滿貫 p311–322"],["英文","單字＋雜誌"]]},
+   {d:"8/29",w:"六",type:"cram",tasks:[["英文","單字＋雜誌"]]},
+   {d:"8/30",w:"日",type:"cram",tasks:[["英文","單字＋雜誌"],["地科","自然總錯題複習"]]},
+ ]},
+ {week:"衝刺（8/31–9/1）", days:[
+   {d:"8/31",w:"一",type:"study",tasks:[["衝刺","物理＋化學 全範圍重點＋錯題"],["英文","單字＋雜誌"]]},
+   {d:"9/1",w:"二",type:"study",tasks:[["衝刺","生物＋地科 全範圍重點＋錯題"],["國文","大滿貫 複習一輪"],["英文","早點睡、明天模考💪"]]},
+ ]},
+ {week:"模考", days:[
+   {d:"9/2",w:"三",type:"exam",tasks:[["模考","第二次模考 Day 1 📝"]]},
+   {d:"9/3",w:"四",type:"exam",tasks:[["模考","第二次模考 Day 2 📝"]]},
+ ]},
+];
+const KEY='wenny_study_2026mock';
+let done={}; try{ done=JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){}
+const contentEl=document.getElementById('content');
+let total=0;
+function render(){
+  let h=''; total=0;
+  PLAN.forEach((wk,wi)=>{
+    h+='<div class="weekhead">'+wk.week+'</div>';
+    wk.days.forEach((day,di)=>{
+      const tagHtml = day.type==='cram' ? '<span class="dtag tag-cram">補習日</span>' : (day.type==='exam'?'<span class="dtag tag-exam">模考</span>':'');
+      h+='<div class="day '+day.type+'"><div class="dhead"><span class="ddate">'+day.d+'</span><span class="ddow">（'+day.w+'）</span>'+tagHtml+'</div>';
+      day.tasks.forEach((t,ti)=>{
+        const id=wi+'_'+di+'_'+ti; total++;
+        const dn=done[id]?' done':'';
+        h+='<div class="task'+dn+'"><div class="chk" onclick="tog(\''+id+'\')">✓</div><div class="ttxt"><span class="chip c-'+t[0]+'">'+t[0]+'</span>'+t[1]+'</div></div>';
+      });
+      h+='</div>';
+    });
+  });
+  contentEl.innerHTML=h;
+  updateProg();
+}
+function tog(id){ done[id]=!done[id]; localStorage.setItem(KEY,JSON.stringify(done)); render(); }
+function updateProg(){
+  const c=Object.values(done).filter(Boolean).length;
+  document.getElementById('progtxt').textContent=c+' / '+total+' 完成';
+  document.getElementById('barfill').style.width=(total?Math.round(c/total*100):0)+'%';
+  try{
+    const now=new Date();
+    const exam=new Date(now.getFullYear(),8,2); // 9/2
+    const diff=Math.ceil((exam-now)/86400000);
+    document.getElementById('cd').textContent = diff>0 ? ('距模考還有 '+diff+' 天') : (diff===0?'今天模考！':'');
+  }catch(e){}
+}
+render();
+</script>
+</body>
+</html>
